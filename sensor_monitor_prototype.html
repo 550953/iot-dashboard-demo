@@ -51,17 +51,31 @@
       margin-left: auto;
       margin-right: auto;
     }
+
+    #alert-banner {
+      margin-bottom: 1rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #d9534f;
+      /* красный для предупреждений */
+      text-align: center;
+      min-height: 1.5em;
+    }
   </style>
 </head>
 
 <body>
   <div class="container mt-4">
     <h2 class="mb-4 text-center">Sensor Monitor Prototype</h2>
+
+    <!-- Здесь будет сообщение об alert -->
+    <div id="alert-banner"></div>
+
     <div class="row" id="sensor-container"></div>
 
     <div class="btn-group-custom">
       <button id="btnSetThreshold" class="btn btn-primary mx-2">Установить порог</button>
-      <button id="btnToggleAlerts" class="btn btn-warning mx-2">Вкл/Выкл уведомления</button>
+      <button id="btnToggleAlerts" class="btn btn-warning mx-2">Выключить уведомления</button>
     </div>
 
     <!-- Contact Form -->
@@ -70,15 +84,15 @@
       <form id="contactForm">
         <div class="form-group">
           <label>Имя</label>
-          <input type="text" class="form-control" id="name" required />
+          <input type="text" class="form-control" name="name" required />
         </div>
         <div class="form-group">
           <label>Email</label>
-          <input type="email" class="form-control" id="email" required />
+          <input type="email" class="form-control" name="email" required />
         </div>
         <div class="form-group">
           <label>Сообщение</label>
-          <textarea class="form-control" id="message" rows="4" required></textarea>
+          <textarea class="form-control" name="message" rows="4" required></textarea>
         </div>
         <button type="submit" class="btn btn-success btn-block mt-3">Отправить</button>
       </form>
@@ -90,28 +104,33 @@
   <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
   <script src="https://cdn.emailjs.com/sdk/3.11.0/email.min.js"></script>
   <script>
-    // EmailJS init
-    emailjs.init("7nqlBTzsCOtn1KfZf"); // ← твой publicKey
+    emailjs.init("7nqlBTzsCOtn1KfZf");
 
-    // Обработка формы
     document.getElementById("contactForm").addEventListener("submit", function (e) {
       e.preventDefault();
       emailjs.send("service_ex044kz", "template_0md6c3q", {
-        name: document.getElementById("name").value,
-        email: document.getElementById("email").value,
-        message: document.getElementById("message").value
-      }).then(
-        function () {
-          alert("Сообщение успешно отправлено!");
-          document.getElementById("contactForm").reset();
-        },
-        function (error) {
-          alert("Ошибка при отправке: " + JSON.stringify(error));
-        }
-      );
+        name: this.name.value,
+        email: this.email.value,
+        message: this.message.value
+      }).then(() => {
+        // Вместо alert - сообщение внизу формы
+        const form = document.getElementById("contactForm");
+        const successMsg = document.createElement("div");
+        successMsg.className = "alert alert-success mt-3";
+        successMsg.textContent = "Сообщение успешно отправлено!";
+        form.appendChild(successMsg);
+        form.reset();
+        setTimeout(() => successMsg.remove(), 4000);
+      }, (error) => {
+        const form = document.getElementById("contactForm");
+        const errorMsg = document.createElement("div");
+        errorMsg.className = "alert alert-danger mt-3";
+        errorMsg.textContent = "Ошибка при отправке: " + error.text;
+        form.appendChild(errorMsg);
+        setTimeout(() => errorMsg.remove(), 5000);
+      });
     });
 
-    // Мониторинг сенсоров
     let NUM_SENSORS = 10;
     let THRESHOLD = 75;
     let alertsEnabled = true;
@@ -154,13 +173,24 @@
         sensor.critical = sensor.value > THRESHOLD;
       });
       renderSensors();
-      if (alertsEnabled && sensors.some((s) => s.critical)) {
-        notifyAlert();
-      }
+      updateAlertBanner();
     }
 
-    function notifyAlert() {
-      alert("Внимание! Один или несколько сенсоров превысили критический порог.");
+    function updateAlertBanner() {
+      const alertBanner = document.getElementById("alert-banner");
+      if (alertsEnabled) {
+        const criticalCount = sensors.filter(s => s.critical).length;
+        if (criticalCount > 0) {
+          alertBanner.textContent = `Внимание! ${criticalCount} сенсор${criticalCount > 1 ? 'ов' : ''} превысил${criticalCount > 1 ? 'и' : ''} порог ${THRESHOLD}.`;
+          alertBanner.style.color = "#d9534f";
+        } else {
+          alertBanner.textContent = "Все сенсоры в норме.";
+          alertBanner.style.color = "#28a745";
+        }
+      } else {
+        alertBanner.textContent = "Уведомления отключены.";
+        alertBanner.style.color = "#6c757d";
+      }
     }
 
     $("#btnSetThreshold").on("click", () => {
@@ -174,11 +204,13 @@
 
     $("#btnToggleAlerts").on("click", () => {
       alertsEnabled = !alertsEnabled;
-      alert("Уведомления " + (alertsEnabled ? "включены" : "отключены"));
+      $("#btnToggleAlerts").text(alertsEnabled ? "Выключить уведомления" : "Включить уведомления");
+      updateAlertBanner();
     });
 
     $(document).ready(() => {
       renderSensors();
+      updateAlertBanner();
       setInterval(updateSensors, 5000);
     });
   </script>
