@@ -1,43 +1,26 @@
-<!DOCTYPE html>
-<html lang="ru">
+<form id="contactForm">
+  <input type="text" id="name" placeholder="Имя" required />
+  <input type="email" id="email" placeholder="Email" required />
+  <textarea id="message" placeholder="Сообщение" required></textarea>
+  <button type="submit">Отправить</button>
+</form>
 
-<head>
-  <meta charset="UTF-8" />
-  <title>Contact Form</title>
-  <script src="https://cdn.emailjs.com/sdk/3.11.0/email.min.js"></script>
-</head>
+<script src="https://cdn.emailjs.com/sdk/3.11.0/email.min.js"></script>
+<script>
+  emailjs.init("7nqlBTzsCOtn1KfZf"); // твой publicKey
 
-<body>
-  <form id="contactForm">
-    <label>Имя<br />
-      <input type="text" name="name" required />
-    </label><br /><br />
-    <label>Email<br />
-      <input type="email" name="email" required />
-    </label><br /><br />
-    <label>Сообщение<br />
-      <textarea name="message" required></textarea>
-    </label><br /><br />
-    <button type="submit">Отправить</button>
-  </form>
+  document.getElementById("contactForm").addEventListener("submit", function (event) {
+    event.preventDefault();
 
-  <script>
-    emailjs.init('7nqlBTzsCOtn1KfZf'); // твой publicKey
-
-    document.getElementById('contactForm').addEventListener('submit', function (e) {
-      e.preventDefault();
-      emailjs.send('service_ex044kz', 'template_0md6c3q', {
-        name: this.name.value,
-        email: this.email.value,
-        message: this.message.value
-      }).then(() => {
-        alert('Сообщение отправлено!');
-        this.reset();
-      }, (error) => {
-        alert('Ошибка отправки: ' + JSON.stringify(error));
-      });
+    emailjs.send("service_ex044kz", "template_0md6c3q", {
+      name: document.getElementById("name").value,
+      email: document.getElementById("email").value,
+      message: document.getElementById("message").value
+    }).then(() => {
+      alert("Письмо отправлено!");
+      this.reset();
+    }, (err) => {
+      alert("Ошибка отправки: " + JSON.stringify(err));
     });
-  </script>
-</body>
-
-</html>
+  });
+</script>
