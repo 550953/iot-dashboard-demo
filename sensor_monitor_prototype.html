@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sensor Monitor Prototype</title>
+  <!-- AdminLTE CSS (CDN) -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css"
+  />
+  <!-- Font Awesome for icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+  <style>
+    body {
+      background: #f4f6f9;
+    }
+    .sensor-card {
+      cursor: default;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+    .status-normal {
+      background-color: #e0e0e0;
+      color: #333;
+    }
+    .status-critical {
+      background-color: #a0a0a0;
+      color: #fff;
+    }
+    .sensor-value {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+    .sensor-id {
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+    }
+    .btn-group-custom {
+      margin-top: 1rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-4">
+    <h2 class="mb-4 text-center">Sensor Monitor Prototype</h2>
+    <div class="row" id="sensor-container">
+      <!-- Sensor cards go here -->
+    </div>
+    <div class="btn-group-custom">
+      <button id="btnSetThreshold" class="btn btn-primary mx-2">
+        Установить порог
+      </button>
+      <button id="btnToggleAlerts" class="btn btn-warning mx-2">
+        Включить/выключить уведомления
+      </button>
+    </div>
+  </div>
+
+  <!-- jQuery and AdminLTE JS (CDN) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+  <script>
+    let NUM_SENSORS = 10;
+    let THRESHOLD = 75;
+    let alertsEnabled = true;
+
+    // Create initial sensors data
+    let sensors = [];
+    for (let i = 1; i <= NUM_SENSORS; i++) {
+      sensors.push({
+        id: i,
+        value: getRandomValue(),
+        critical: false,
+      });
+    }
+
+    // Helper to get random sensor value 50..100
+    function getRandomValue() {
+      return Math.floor(50 + Math.random() * 50);
+    }
+
+    // Render sensor cards
+    function renderSensors() {
+      const container = $("#sensor-container");
+      container.empty();
+      sensors.forEach((sensor) => {
+        const cardClass = sensor.critical ? "status-critical" : "status-normal";
+        const card = $(`
+          <div class="col-md-4 col-lg-3 mb-3">
+            <div class="card sensor-card ${cardClass} p-3">
+              <div class="sensor-id">Сенсор №${sensor.id}</div>
+              <div class="sensor-value">${sensor.value}</div>
+              <div>
+                Статус: ${
+                  sensor.critical
+                    ? '<i class="fas fa-exclamation-triangle"></i> КРИТИЧНО'
+                    : '<i class="fas fa-check-circle"></i> Норма'
+                }
+              </div>
+            </div>
+          </div>
+        `);
+        container.append(card);
+      });
+    }
+
+    // Update sensors values randomly and mark critical if over threshold
+    function updateSensors() {
+      sensors.forEach((sensor) => {
+        sensor.value = getRandomValue();
+        sensor.critical = sensor.value > THRESHOLD;
+      });
+      renderSensors();
+      if (alertsEnabled && sensors.some((s) => s.critical)) {
+        notifyAlert();
+      }
+    }
+
+    // Simulated notification (alert)
+    function notifyAlert() {
+      alert(
+        "Внимание! Один или несколько сенсоров превысили критический порог."
+      );
+    }
+
+    // Set Threshold button handler (just prompt new threshold)
+    $("#btnSetThreshold").on("click", () => {
+      const input = prompt("Введите новый порог критического значения:", THRESHOLD);
+      const num = Number(input);
+      if (!isNaN(num)) {
+        THRESHOLD = num;
+        updateSensors();
+      }
+    });
+
+    // Toggle Alerts button handler
+    $("#btnToggleAlerts").on("click", () => {
+      alertsEnabled = !alertsEnabled;
+      alert("Уведомления " + (alertsEnabled ? "включены" : "отключены"));
+    });
+
+    // Initial render
+    $(document).ready(() => {
+      renderSensors();
+      // Update sensors every 5 seconds
+      setInterval(updateSensors, 5000);
+    });
+  </script>
+</body>
+</html>
